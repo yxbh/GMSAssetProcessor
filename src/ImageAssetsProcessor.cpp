@@ -201,6 +201,7 @@ namespace ke
 
                 const Texture & texture(*textureIt);
 
+                // copy sprite from packed texture back to its own sprite image.
                 QImage spriteImage(sprite.dimension.width, sprite.dimension.height, texture.texture.format());
                 spriteImage.fill(this->backgroundFillColour);
                 QPainter painter(&spriteImage);
@@ -211,6 +212,7 @@ namespace ke
 
                 if (this->isOverrideAlpha0PixelsWithBgFillColour)
                 {
+                    // convert pixels with 0 alpha to the background fill color
                     for (int row = 0; row < spriteImage.height(); ++row)
                     {
                         QRgb * rowPixels = reinterpret_cast<QRgb*>(spriteImage.scanLine(row));
