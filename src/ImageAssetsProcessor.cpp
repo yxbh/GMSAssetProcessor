@@ -269,7 +269,17 @@ namespace ke
             for (QFileInfo & fileInfo : spriteFolderContents)
             {
                 const QImage spriteFrame(fileInfo.absoluteFilePath());
-                GifWriteFrame(&gifWriter, reinterpret_cast<const uint8_t*>(spriteFrame.bits()),
+
+                // convert color channel order for gif lib.
+                auto pixelsBegin = reinterpret_cast<const uint32_t*>(spriteFrame.constBits());
+                auto pixelsEnd = pixelsBegin + spriteFrame.width() * spriteFrame.height();
+                std::vector<uint32_t> pixelsRGBA(pixelsBegin, pixelsEnd);
+                for (uint32_t & pixel : pixelsRGBA)
+                {
+                    pixel = ((pixel) & 0xff000000) | ((pixel << 16) & 0x00ff0000) | ((pixel) & 0x0000ff00) | ((pixel >> 16) & 0x000000ff);
+                }
+
+                GifWriteFrame(&gifWriter, reinterpret_cast<const uint8_t*>(pixelsRGBA.data()),
                               sprite.dimension.width, sprite.dimension.height, gifFrameDelayInMs, 8, true);
             }
 
