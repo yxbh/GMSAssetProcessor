@@ -77,15 +77,15 @@ void MainWindow::on_pushButton_processImageAssets_clicked()
                 ui->lineEdit_texpageFolderPath->text(),
                 ui->lineEdit_textureFolderPath->text(),
                 ui->lineEdit_imageProcessingOutputFolderPath->text(),
-                ui->checkBox_imageProcessingOverrideAlpha0PixelWithFillColour->isChecked(),
                 qRgba(
                     ui->spinBox_imageProcessingBgFillColorChannelRed->value(),
                     ui->spinBox_imageProcessingBgFillColorChannelGreen->value(),
                     ui->spinBox_imageProcessingBgFillColorChannelBlue->value(),
                     ui->spinBox_imageProcessingBgFillColorChannelAlpha->value()
                 ),
+                ui->checkBox_imageProcessingOverrideAlpha0PixelWithFillColour->isChecked(),
                 ui->checkBox_imageProcessingGenerateGif->isChecked(),
-                ui->spinBox_imageProcessingGifFrameDelay->value()/10);
+                ui->spinBox_imageProcessingGifFrameDelay->value());
 
     QString buttonTextOrg = ui->pushButton_processImageAssets->text();
     ui->pushButton_processImageAssets->setText("Processing");

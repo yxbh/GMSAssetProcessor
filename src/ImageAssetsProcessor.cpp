@@ -2,6 +2,7 @@
 
 #include "gif.h"
 
+#include <QDebug>
 #include <QCollator>
 #include <QDir>
 #include <QFile>
@@ -45,12 +46,29 @@ namespace ke
             processor->texpageFolderPath = texpageFolderPath;
             processor->textureFolderPath = textureFolderPath;
             processor->processingOutputFolderPath = outputFolderPath;
+            qDebug() << "sprite folder path: " << spriteFolderPath;
+            qDebug() << "texpage folder path: " << texpageFolderPath;
+            qDebug() << "texture folder path: " << textureFolderPath;
 
             processor->backgroundFillColour = backgroundFillColour;
+            qDebug() << "Set background fill color to ("
+                     << qRed(backgroundFillColour) << ", "
+                     << qGreen(backgroundFillColour) << ", "
+                     << qBlue(backgroundFillColour) << ", "
+                     << qAlpha(qRed(backgroundFillColour)) << ").";
+
             processor->isOverrideAlpha0PixelsWithBgFillColour = overrideAlpha0PixelsWithBgFillColour;
+            if (overrideAlpha0PixelsWithBgFillColour)
+            {
+                qDebug() << "Set to override pixels with alpha == 0 with background fill color.";
+            }
 
             processor->isGeneratingGif = generateGif;
             processor->gifFrameDelayInMs = gifFrameDelayInMs;
+            if (generateGif)
+            {
+                qDebug() << "Set to generate GIF images with " << gifFrameDelayInMs << "ms frame time.";
+            }
 
             return processor;
         }
@@ -249,6 +267,8 @@ namespace ke
 
             QDir spriteDir(outputDir.filePath(sprite.name));
             auto spriteFolderContents = spriteDir.entryInfoList(QStringList() << "*.png", QDir::Files);
+
+            // sort files in natural numeric order.
             QCollator collator;
             collator.setNumericMode(true);
             std::sort(
@@ -259,6 +279,7 @@ namespace ke
                     return collator.compare(fileInfo1.baseName(), fileInfo2.baseName()) < 0;
                 });
 
+            // we don't generate GIF when there's only 1 or no sprite image.
             if (spriteFolderContents.size() <= 1) continue;
 
             auto gifFilePath = spriteDir.filePath(sprite.name + ".gif");
@@ -266,7 +287,7 @@ namespace ke
 
             GifWriter gifWriter;
             GifBegin(&gifWriter, gifFilePath.toStdString().c_str(),
-                     sprite.dimension.width, sprite.dimension.height, gifFrameDelayInMs, 8, true);
+                     sprite.dimension.width, sprite.dimension.height, gifFrameDelayInMs/10, 8, true);
 
             for (QFileInfo & fileInfo : spriteFolderContents)
             {
@@ -282,7 +303,7 @@ namespace ke
                 }
 
                 GifWriteFrame(&gifWriter, reinterpret_cast<const uint8_t*>(pixelsRGBA.data()),
-                              sprite.dimension.width, sprite.dimension.height, gifFrameDelayInMs, 8, true);
+                              sprite.dimension.width, sprite.dimension.height, gifFrameDelayInMs/10, 8, true);
             }
 
             GifEnd(&gifWriter);
