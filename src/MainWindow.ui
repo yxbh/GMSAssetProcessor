@@ -28,88 +28,105 @@
         <item>
          <layout class="QGridLayout" name="gridLayout">
           <item row="0" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>'bg' folder:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
            <widget class="QLabel" name="label">
             <property name="text">
              <string>'sprite' folder:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
+          <item row="1" column="2">
            <widget class="QLineEdit" name="lineEdit_spriteFolderPath">
             <property name="text">
-             <string></string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
+          <item row="1" column="3">
            <widget class="QPushButton" name="pushButton_browseSpriteFolder">
             <property name="text">
              <string>Browse</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QLabel" name="label_2">
             <property name="text">
              <string>'texpage' folder:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="2" column="2">
            <widget class="QLineEdit" name="lineEdit_texpageFolderPath">
             <property name="text">
-             <string></string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="2" column="3">
            <widget class="QPushButton" name="pushButton_browseTexpageFolder">
             <property name="text">
              <string>Browse</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="3" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
              <string>'texture' folder:</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="3" column="2">
            <widget class="QLineEdit" name="lineEdit_textureFolderPath">
             <property name="text">
-             <string></string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
+          <item row="3" column="3">
            <widget class="QPushButton" name="pushButton_browseTextureFolder">
             <property name="text">
              <string>Browse</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
+          <item row="4" column="0">
            <widget class="QLabel" name="label_4">
             <property name="text">
              <string>output folder:</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="4" column="2">
            <widget class="QLineEdit" name="lineEdit_imageProcessingOutputFolderPath">
             <property name="text">
-             <string></string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
+          <item row="4" column="3">
            <widget class="QPushButton" name="pushButton_imageProcessingOutputFolder">
             <property name="text">
              <string>Browse</string>
             </property>
            </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QPushButton" name="pushButton_browseBackgroundFolder">
+            <property name="text">
+             <string>Browse</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLineEdit" name="lineEdit_backgroundFolderPath"/>
           </item>
          </layout>
         </item>

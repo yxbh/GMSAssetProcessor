@@ -15,7 +15,8 @@ namespace ke
     {
     public:
         static AssetsProcessorSptr createProcessor(
-                ProgressAnnouncer progress, const QString & spriteFolderPath, const QString & texpageFolderPath,
+                ProgressAnnouncer progress, const QString & backgroundFolderPath,
+                const QString & spriteFolderPath, const QString & texpageFolderPath,
                 const QString & textureFolderPath, const QString & outputFolderPath,
                 const QRgb & backgroundFillColour, bool overrideAlpha0PixelsWithBgFillColour,
                 bool generateGif, std::size_t gifFrameDelayInMs);
@@ -25,14 +26,17 @@ namespace ke
         virtual bool process() final;
 
     private:
+        void processBackgroundFiles();
         void processSpriteFiles();
         void processTexpageFiles();
         void processTextureFiles();
 
+        bool generateBackgroundFiles();
         bool generateSpriteFiles();
         bool generateGifFiles();
 
     private:
+        QString backgroundFolderPath;
         QString spriteFolderPath;
         QString texpageFolderPath;
         QString textureFolderPath;
@@ -40,6 +44,12 @@ namespace ke
 
         QRgb backgroundFillColour;
         bool isOverrideAlpha0PixelsWithBgFillColour;
+
+        struct Background
+        {
+            QString name;
+            TexpageId texpageId;
+        };
 
         struct Sprite
         {
@@ -79,8 +89,9 @@ namespace ke
         };
 
         QList<Texpage> texpages;
-        QList<Sprite> sprites;
         QList<Texture> textures;
+        QList<Sprite> sprites;
+        QList<Background> backgrounds;
 
         bool isGeneratingGif;
         std::size_t gifFrameDelayInMs;

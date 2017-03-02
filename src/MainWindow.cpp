@@ -22,11 +22,17 @@ MainWindow::~MainWindow()
 void MainWindow::updateProcessImageAssetButton()
 {
     ui->pushButton_processImageAssets->setEnabled(
+                !ui->lineEdit_backgroundFolderPath->text().isEmpty() &&
                 !ui->lineEdit_spriteFolderPath->text().isEmpty() &&
                 !ui->lineEdit_texpageFolderPath->text().isEmpty() &&
                 !ui->lineEdit_textureFolderPath->text().isEmpty() &&
                 !ui->lineEdit_imageProcessingOutputFolderPath->text().isEmpty()
                 );
+}
+
+void MainWindow::on_pushButton_browseBackgroundFolder_clicked()
+{
+    ui->lineEdit_backgroundFolderPath->setText(QFileDialog::getExistingDirectory(this, tr("Browse")));
 }
 
 void MainWindow::on_pushButton_browseSpriteFolder_clicked()
@@ -46,7 +52,12 @@ void MainWindow::on_pushButton_browseTextureFolder_clicked()
 
 void MainWindow::on_pushButton_imageProcessingOutputFolder_clicked()
 {
+    ui->lineEdit_imageProcessingOutputFolderPath->setText(QFileDialog::getExistingDirectory(this, tr("Browse")));
+}
 
+void MainWindow::on_lineEdit_backgroundFolderPath_textChanged(const QString &)
+{
+    updateProcessImageAssetButton();
 }
 
 void MainWindow::on_lineEdit_spriteFolderPath_textChanged(const QString &)
@@ -73,6 +84,7 @@ void MainWindow::on_pushButton_processImageAssets_clicked()
                         qApp->processEvents();
                     ui->statusBar->showMessage(msg);
                 },
+                ui->lineEdit_backgroundFolderPath->text(),
                 ui->lineEdit_spriteFolderPath->text(),
                 ui->lineEdit_texpageFolderPath->text(),
                 ui->lineEdit_textureFolderPath->text(),

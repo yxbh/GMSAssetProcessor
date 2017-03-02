@@ -20,17 +20,20 @@ namespace ke
 {
 
     AssetsProcessorSptr ImageAssetsProcessor::createProcessor(
-            ProgressAnnouncer progress, const QString & spriteFolderPath, const QString & texpageFolderPath,
+            ProgressAnnouncer progress, const QString & backgroundFolderPath,
+            const QString & spriteFolderPath, const QString & texpageFolderPath,
             const QString & textureFolderPath, const QString & outputFolderPath,
             const QRgb & backgroundFillColour, bool overrideAlpha0PixelsWithBgFillColour,
             bool generateGif, std::size_t gifFrameDelayInMs)
     {
+        QDir backgroundFolderPathChecker(backgroundFolderPath);
         QDir spriteFolderPathChecker(spriteFolderPath);
         QDir texpageFolderPathChecker(texpageFolderPath);
         QDir textureFolderPathPathChecker(textureFolderPath);
         QDir outputFolder(outputFolderPath);
 
-        if (spriteFolderPathChecker.exists() &&
+        if (backgroundFolderPathChecker.exists() &&
+            spriteFolderPathChecker.exists() &&
             texpageFolderPathChecker.exists() &&
             textureFolderPathPathChecker.exists())
         {
@@ -42,6 +45,7 @@ namespace ke
 
             auto processor = std::make_shared<ImageAssetsProcessor>(progress);
 
+            processor->backgroundFolderPath = backgroundFolderPath;
             processor->spriteFolderPath = spriteFolderPath;
             processor->texpageFolderPath = texpageFolderPath;
             processor->textureFolderPath = textureFolderPath;
@@ -78,10 +82,12 @@ namespace ke
 
     bool ImageAssetsProcessor::process()
     {
+        processBackgroundFiles();
         processSpriteFiles();
         processTexpageFiles();
         processTextureFiles();
 
+        if (!generateBackgroundFiles()) return false;
         if (!generateSpriteFiles()) return false;
 
         if (this->isGeneratingGif && !generateGifFiles()) return false;
@@ -89,11 +95,35 @@ namespace ke
         return true;
     }
 
+    void ImageAssetsProcessor::processBackgroundFiles()
+    {
+        QDir backgroundDirPath(backgroundFolderPath);
+        auto backgroundFolderContents = backgroundDirPath.entryInfoList(QStringList() << "*.json", QDir::Files);
+        for (const auto & fileInfo : backgroundFolderContents)
+        {
+            updateProgress("Processing: " + fileInfo.absoluteFilePath());
+
+            QFile jsonFile(fileInfo.absoluteFilePath());
+
+            if (!jsonFile.open(QFile::ReadOnly | QFile::Text)) break;
+            QTextStream ifs(&jsonFile);
+            const auto jsonDoc = QJsonDocument::fromJson(ifs.readAll().toUtf8());
+
+            const auto jsonObjRoot = jsonDoc.object();
+
+            Background bg;
+            bg.name = fileInfo.baseName();
+            bg.texpageId = jsonObjRoot["texture"].toInt();
+
+            backgrounds.push_back(bg);
+        }
+    }
+
     void ImageAssetsProcessor::processSpriteFiles()
     {
         QDir spriteDirPath(spriteFolderPath);
         auto spriteFolderContents = spriteDirPath.entryInfoList(QStringList() << "*.json", QDir::Files);
-        for (auto fileInfo : spriteFolderContents)
+        for (const auto & fileInfo : spriteFolderContents)
         {
             updateProgress("Processing: " + fileInfo.absoluteFilePath());
 
@@ -133,7 +163,7 @@ namespace ke
     {
         QDir texpageDirPath(texpageFolderPath);
         auto texpageFolderContents = texpageDirPath.entryInfoList(QStringList() << "*.json", QDir::Files);
-        for (auto fileInfo : texpageFolderContents)
+        for (const auto & fileInfo : texpageFolderContents)
         {
             updateProgress("Processing: " + fileInfo.absoluteFilePath());
 
@@ -171,7 +201,7 @@ namespace ke
     {
         QDir textureDirPath(textureFolderPath);
         auto textureFolderContents = textureDirPath.entryInfoList(QStringList() << "*.png", QDir::Files);
-        for (auto fileInfo : textureFolderContents)
+        for (const auto & fileInfo : textureFolderContents)
         {
             updateProgress("Processing: " + fileInfo.absoluteFilePath());
 
@@ -181,6 +211,77 @@ namespace ke
 
             textures.push_back(texture);
         }
+    }
+
+    bool ImageAssetsProcessor::generateBackgroundFiles()
+    {
+        QDir outputDir(processingOutputFolderPath);
+        for (const Background & background : backgrounds)
+        {
+            updateProgress("Generating background image for " + background.name);
+
+            if (!outputDir.mkdir(background.name) &&
+                !QDir(outputDir.filePath(background.name)).exists())
+            {
+                updateProgress("Failure generating background image(s) for " + background.name);
+                return false;
+            }
+
+            QDir backgroundDir(outputDir.filePath(background.name));
+            auto texpageId = background.texpageId;
+            auto texpageIt = std::find_if(texpages.constBegin(), texpages.constEnd(), [texpageId](const Texpage & texpage){ return (texpage.id == texpageId); });
+            if (texpageIt == texpages.constEnd())
+            {
+                updateProgress("Failure looking for texpage with id " + QString::number(texpageId));
+                return false;
+            }
+
+            const Texpage & texpage(*texpageIt);
+
+            auto textureIt = std::find_if(textures.constBegin(), textures.constEnd(), [&texpage](const Texture & texture){ return texture.id == texpage.textureId; });
+            if (textureIt == textures.constEnd())
+            {
+                updateProgress("Failure looking for texture with id " + QString::number(texpage.textureId));
+                return false;
+            }
+
+            const Texture & texture(*textureIt);
+
+            // copy sprite from packed texture back to its own sprite image.
+            QImage backgroundImage(texpage.sourceDimension.width, texpage.sourceDimension.height, texture.texture.format());
+            backgroundImage.fill(this->backgroundFillColour);
+            QPainter painter(&backgroundImage);
+            painter.drawImage(texpage.destinationPosition.x, texpage.destinationPosition.y,
+                              texture.texture,
+                              texpage.sourcePosition.x, texpage.sourcePosition.y,
+                              texpage.sourceDimension.width, texpage.sourceDimension.height);
+
+            if (this->isOverrideAlpha0PixelsWithBgFillColour)
+            {
+                // convert pixels with 0 alpha to the background fill color
+                for (int row = 0; row < backgroundImage.height(); ++row)
+                {
+                    QRgb * rowPixels = reinterpret_cast<QRgb*>(backgroundImage.scanLine(row));
+                    for (int pixel_i = 0; pixel_i < backgroundImage.width(); ++pixel_i)
+                    {
+                        if (qAlpha(rowPixels[pixel_i]) == 0)
+                        {
+                            rowPixels[pixel_i] = this->backgroundFillColour;
+                        }
+                    }
+                }
+            }
+
+            auto targetPath = backgroundDir.filePath(background.name + ".png");
+            bool result = backgroundImage.save(targetPath);
+            if (!result)
+            {
+                updateProgress("Failure saving extracted background image at " + targetPath);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     bool ImageAssetsProcessor::generateSpriteFiles()
